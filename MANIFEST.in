@@ -1,0 +1,10 @@
+include API.md
+include LICENSE
+include README
+include requirements.txt
+include man/custodia.7
+include custodia.conf
+
+recurive-include custodia *.py
+recursive-include docs *
+prune docs/build

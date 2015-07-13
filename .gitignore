@@ -6,3 +6,4 @@ cscope.out
 .tox
 .coverage
 MANIFEST
+*.egg-info
