@@ -74,6 +74,9 @@ class SqliteStore(CSStore):
             log_error("Error storing key %s: [%r]" % (key, repr(err)))
             raise CSStoreError('Error occurred while trying to store key')
 
+    def span(self, key):
+        self.set(key, '')
+
     def list(self, keyfilter='/'):
         search = "SELECT key FROM %s WHERE key LIKE ?" % self.table
         key = "%s%%" % (keyfilter,)

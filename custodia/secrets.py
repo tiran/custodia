@@ -60,7 +60,7 @@ class Secrets(HTTPConsumer):
         # create default namespace if it is the only missing piece
         if keylist is None and len(trail) == 2 and default == trail[0]:
             container = self._db_container_key(default, '')
-            self.root.store.set(container, '')
+            self.root.store.span(container)
             return True
 
         # check if any parent is missing
@@ -129,7 +129,7 @@ class Secrets(HTTPConsumer):
             if not ok:
                 raise HTTPError(404)
 
-            self.root.store.set(basename, '')
+            self.root.store.span(basename)
         except CSStoreExists:
             raise HTTPError(409)
         except CSStoreError:
