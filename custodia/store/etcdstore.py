@@ -2,7 +2,6 @@
 
 from __future__ import print_function
 
-import os
 import sys
 
 import etcd
@@ -33,16 +32,27 @@ class EtcdStore(CSStore):
                                                              repr(err)))
             raise CSStoreError('Error occurred while trying to init db')
 
+    def _absolute_key(self, key):
+        """Get absolute path to key and validate key"""
+        if '//' in key:
+            raise ValueError("Invalid empty path component in key '%s'" % key)
+        parts = key.split('/')
+        for part in parts:
+            if part == '.' or part == '..':
+                raise ValueError(
+                    "Invalid path component '%s' in key '%s'" % (part, key))
+        return '/'.join([self.namespace] + parts).replace('//', '/')
+
     def get(self, key):
         try:
-            result = self.etcd.get(os.path.join(self.namespace, key))
+            result = self.etcd.get(self._absolute_key(key))
         except etcd.EtcdException as err:
             log_error("Error fetching key %s: [%r]" % (key, repr(err)))
             raise CSStoreError('Error occurred while trying to get key')
         return result.value
 
     def set(self, key, value, replace=False):
-        path = os.path.join(self.namespace, key)
+        path = self._absolute_key(key)
         try:
             self.etcd.write(path, value, prevExist=replace)
         except etcd.EtcdAlreadyExist as err:
@@ -52,7 +62,7 @@ class EtcdStore(CSStore):
             raise CSStoreError('Error occurred while trying to store key')
 
     def span(self, key):
-        path = os.path.join(self.namespace, key)
+        path = self._absolute_key(key)
         try:
             self.etcd.write(path, None, dir=True, prevExist=False)
         except etcd.EtcdAlreadyExist as err:
@@ -71,7 +81,7 @@ class EtcdStore(CSStore):
         return name
 
     def list(self, keyfilter='/'):
-        path = os.path.join(self.namespace, keyfilter)
+        path = self._absolute_key(keyfilter)
         prefix = path[:len(keyfilter)]
         try:
             result = self.etcd.read(path, recursive=True)
@@ -90,7 +100,7 @@ class EtcdStore(CSStore):
 
     def cut(self, key):
         try:
-            self.etcd.delete(os.path.join(self.namespace, key))
+            self.etcd.delete(self._absolute_key(key))
         except etcd.EtcdKeyNotFound:
             return False
         except etcd.EtcdException as err:
