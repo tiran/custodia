@@ -298,7 +298,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_0_LISTkey_404(self):
         req = {'remote_user': 'test',
-               'trail': ['test', '']}
+               'trail': ['test', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -309,13 +310,15 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'application/json'},
                'remote_user': 'test',
                'trail': ['test', 'key1'],
-               'body': '{"type":"simple","value":"1234"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"1234"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         self.PUT(req, rep)
 
     def test_2_GETKey(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'key1']}
+               'trail': ['test', 'key1'],
+               'client_ident': None}
         rep = {}
         self.GET(req, rep)
         self.assertEqual(json.loads(rep['output']),
@@ -323,7 +326,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_3_LISTKeys(self):
         req = {'remote_user': 'test',
-               'trail': ['test', '']}
+               'trail': ['test', ''],
+               'client_ident': None}
         rep = {}
         self.GET(req, rep)
         self.assertEqual(json.loads(rep['output']),
@@ -332,7 +336,8 @@ class SecretsTests(unittest.TestCase):
     def test_3_LISTKeys_2(self):
         req = {'remote_user': 'test',
                'query': {'filter': 'key'},
-               'trail': ['test', '']}
+               'trail': ['test', ''],
+               'client_ident': None}
         rep = {}
         self.GET(req, rep)
         self.assertEqual(json.loads(rep['output']),
@@ -342,7 +347,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'text/plain'},
                'remote_user': 'test',
                'trail': ['test', 'key2'],
-               'body': '{"type":"simple","value":"2345"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"2345"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -351,7 +357,8 @@ class SecretsTests(unittest.TestCase):
     def test_4_PUTKey_errors_400_2(self):
         req = {'headers': {'Content-Type': 'text/plain'},
                'remote_user': 'test',
-               'trail': ['test', 'key2']}
+               'trail': ['test', 'key2'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -361,7 +368,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'text/plain'},
                'remote_user': 'test',
                'trail': ['test', 'key2'],
-               'body': '{"type":}"simple","value":"2345"}'.encode('utf-8')}
+               'body': '{"type":}"simple","value":"2345"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -371,7 +379,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'application/json; charset=utf-8'},
                'remote_user': 'test',
                'trail': ['case', 'key2'],
-               'body': '{"type":"simple","value":"2345"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"2345"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -381,7 +390,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'application/json; charset=utf-8'},
                'remote_user': 'test',
                'trail': ['test', 'more', 'key1'],
-               'body': '{"type":"simple","value":"1234"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"1234"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -391,7 +401,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'application/json; charset=utf-8'},
                'remote_user': 'test',
                'trail': ['test', 'key2', ''],
-               'body': '{"type":"simple","value":"2345"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"2345"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.PUT(req, rep)
@@ -401,7 +412,8 @@ class SecretsTests(unittest.TestCase):
         req = {'headers': {'Content-Type': 'application/json; charset=utf-8'},
                'remote_user': 'test',
                'trail': ['test', 'key3'],
-               'body': '{"type":"simple","value":"2345"}'.encode('utf-8')}
+               'body': '{"type":"simple","value":"2345"}'.encode('utf-8'),
+               'client_ident': None}
         rep = {}
         self.PUT(req, rep)
         with self.assertRaises(HTTPError) as err:
@@ -410,7 +422,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_5_GETKey_errors_403(self):
         req = {'remote_user': 'case',
-               'trail': ['test', 'key1']}
+               'trail': ['test', 'key1'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -418,7 +431,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_5_GETkey_errors_404(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'key0']}
+               'trail': ['test', 'key0'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -428,7 +442,8 @@ class SecretsTests(unittest.TestCase):
     def test_5_GETkey_errors_406(self):
         req = {'remote_user': 'test',
                'query': {'type': 'complex'},
-               'trail': ['test', 'key1']}
+               'trail': ['test', 'key1'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -437,7 +452,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_6_LISTkeys_errors_404_1(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'case', '']}
+               'trail': ['test', 'case', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -446,7 +462,8 @@ class SecretsTests(unittest.TestCase):
     def test_6_LISTkeys_errors_404_2(self):
         req = {'remote_user': 'test',
                'query': {'filter': 'foo'},
-               'trail': ['test', '']}
+               'trail': ['test', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.GET(req, rep)
@@ -454,13 +471,15 @@ class SecretsTests(unittest.TestCase):
 
     def test_7_DELETEKey(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'key1']}
+               'trail': ['test', 'key1'],
+               'client_ident': None}
         rep = {}
         self.DELETE(req, rep)
 
     def test_7_DELETEKey_errors_403(self):
         req = {'remote_user': 'case',
-               'trail': ['test', 'key1']}
+               'trail': ['test', 'key1'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)
@@ -468,14 +487,16 @@ class SecretsTests(unittest.TestCase):
 
     def test_7_DELETEKey_errors_404(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'nokey']}
+               'trail': ['test', 'nokey'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)
         self.assertEqual(err.exception.code, 404)
 
     def test_7_DELETEKey_errors_405(self):
-        req = {'remote_user': 'test'}
+        req = {'remote_user': 'test',
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)
@@ -483,14 +504,16 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_CREATEcont(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'container', '']}
+               'trail': ['test', 'container', ''],
+               'client_ident': None}
         rep = {}
         self.POST(req, rep)
         self.assertEqual(rep['code'], 201)
 
     def test_8_CREATEcont_erros_403(self):
         req = {'remote_user': 'case',
-               'trail': ['test', 'container', '']}
+               'trail': ['test', 'container', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.POST(req, rep)
@@ -498,7 +521,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_CREATEcont_erros_404(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'mid', 'container', '']}
+               'trail': ['test', 'mid', 'container', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.POST(req, rep)
@@ -506,7 +530,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_CREATEcont_erros_405(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'container']}
+               'trail': ['test', 'container'],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.POST(req, rep)
@@ -514,7 +539,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_CREATEcont_erros_409(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'exists', '']}
+               'trail': ['test', 'exists', ''],
+               'client_ident': None}
         rep = {}
         self.POST(req, rep)
         with self.assertRaises(HTTPError) as err:
@@ -523,14 +549,16 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_DESTROYcont(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'container', '']}
+               'trail': ['test', 'container', ''],
+               'client_ident': None}
         rep = {}
         self.DELETE(req, rep)
         self.assertEqual(rep['code'], 204)
 
     def test_8_DESTROYcont_erros_403(self):
         req = {'remote_user': 'case',
-               'trail': ['test', 'container', '']}
+               'trail': ['test', 'container', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)
@@ -538,7 +566,8 @@ class SecretsTests(unittest.TestCase):
 
     def test_8_DESTROYcont_erros_404(self):
         req = {'remote_user': 'test',
-               'trail': ['test', 'mid', 'container', '']}
+               'trail': ['test', 'mid', 'container', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)
@@ -547,7 +576,8 @@ class SecretsTests(unittest.TestCase):
     def test_8_DESTROYcont_erros_409(self):
         self.test_1_PUTKey()
         req = {'remote_user': 'test',
-               'trail': ['test', '']}
+               'trail': ['test', ''],
+               'client_ident': None}
         rep = {}
         with self.assertRaises(HTTPError) as err:
             self.DELETE(req, rep)

@@ -11,13 +11,13 @@ import six
 try:
     # pylint: disable=import-error
     from BaseHTTPServer import BaseHTTPRequestHandler
-    from SocketServer import ForkingMixIn, UnixStreamServer
+    from SocketServer import ForkingTCPServer
     from urlparse import urlparse, parse_qs
     from urllib import unquote
 except ImportError:
     # pylint: disable=import-error,no-name-in-module
     from http.server import BaseHTTPRequestHandler
-    from socketserver import ForkingMixIn, UnixStreamServer
+    from socketserver import ForkingTCPServer
     from urllib.parse import urlparse, parse_qs, unquote
 
 from custodia.log import debug as log_debug
@@ -40,8 +40,7 @@ class HTTPError(Exception):
         super(HTTPError, self).__init__(errstring)
 
 
-class ForkingLocalHTTPServer(ForkingMixIn, UnixStreamServer):
-
+class ForkingHTTPServer(ForkingTCPServer):
     """
     A forking HTTP Server.
     Each request runs into a forked server so that the whole environment
@@ -51,23 +50,28 @@ class ForkingLocalHTTPServer(ForkingMixIn, UnixStreamServer):
     When a request is received it is parsed by the handler_class provided
     at server initialization.
     """
-
     server_string = "Custodia/0.1"
     allow_reuse_address = True
     socket_file = None
 
     def __init__(self, server_address, handler_class, config):
-        UnixStreamServer.__init__(self, server_address, handler_class)
+        ForkingTCPServer.__init__(self, server_address, handler_class)
         if 'consumers' not in config:
             raise ValueError('Configuration does not provide any consumer')
         self.config = config
         if 'server_string' in self.config:
             self.server_string = self.config['server_string']
 
+
+class ForkingLocalHTTPServer(ForkingHTTPServer):
+    address_family = socket.AF_UNIX
+
     def server_bind(self):
         oldmask = os.umask(000)
-        UnixStreamServer.server_bind(self)
-        os.umask(oldmask)
+        try:
+            ForkingHTTPServer.server_bind(self)
+        finally:
+            os.umask(oldmask)
         self.socket_file = self.socket.getsockname()
 
 
@@ -117,7 +121,6 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
         self.query = None
         self.url = None
         self.body = None
-        self.loginuid = None
 
     def version_string(self):
         return self.server.server_string
@@ -125,8 +128,8 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
     def _get_loginuid(self, pid):
         loginuid = None
         try:
-            with open("/proc/" + str(pid) + "/loginuid", "r") as f:
-                loginuid = int(f.read(), 10)
+            with open("/proc/%i/loginuid" % pid) as f:
+                loginuid = int(f.read())
         except IOError as e:
             if e.errno != errno.ENOENT:
                 raise
@@ -136,6 +139,9 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
 
     @property
     def peer_creds(self):
+        # works only for unix sockets
+        if self.request.family != socket.AF_UNIX:
+            return None
         creds = self.request.getsockopt(socket.SOL_SOCKET, SO_PEERCRED,
                                         struct.calcsize('3i'))
         pid, uid, gid = struct.unpack('3i', creds)
@@ -147,15 +153,21 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
             log_debug("Couldn't retrieve SELinux Context: (%s)" % str(e))
             context = None
 
-        return {'pid': pid, 'uid': uid, 'gid': gid, 'context': context}
+        loginuid = self._get_loginuid(pid)
+
+        return {'pid': pid, 'uid': uid, 'gid': gid, 'context': context,
+                'loginuid': loginuid}
+
+    @property
+    def peer_info(self):
+        if self.request.family not in {socket.AF_INET, socket.AF_INET6}:
+            return None
+        peername = self.request.getpeername()
+        return {'name': peername}
 
     def parse_request(self, *args, **kwargs):
         if not BaseHTTPRequestHandler.parse_request(self, *args, **kwargs):
             return False
-
-        # grab the loginuid from `/proc` as soon as possible
-        creds = self.peer_creds
-        self.loginuid = self._get_loginuid(creds['pid'])
 
         # after basic parsing also use urlparse to retrieve individual
         # elements of a request.
@@ -182,8 +194,9 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
             self.body = self.rfile.read(length)
 
     def handle_one_request(self):
-        # Set a fake client address to make log functions happy
-        self.client_address = ['127.0.0.1', 0]
+        if self.request.family == socket.AF_UNIX:
+            # Set a fake client address to make log functions happy
+            self.client_address = ['127.0.0.1', 0]
         try:
             if not self.server.config:
                 self.close_connection = 1
@@ -208,14 +221,19 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_error(e.code, e.mesg)
                 self.wfile.flush()
                 return
-            request = {'creds': self.peer_creds,
-                       'command': self.command,
+            request = {'command': self.command,
                        'path': self.path,
                        'query': self.query,
                        'url': self.url,
                        'version': self.request_version,
                        'headers': self.headers,
                        'body': self.body}
+            if self.request.family == socket.AF_UNIX:
+                request['creds'] = self.peer_creds
+                request['client_ident'] = request['creds']['pid']
+            else:
+                request['peer'] = self.peer_info
+                request['client_ident'] = request['peer']['name']
             try:
                 response = self.pipeline(self.server.config, request)
                 if response is None:
@@ -334,15 +352,22 @@ class LocalHTTPRequestHandler(BaseHTTPRequestHandler):
         raise HTTPError(404)
 
 
-class LocalHTTPServer(object):
+class HTTPServer(object):
 
     def __init__(self, address, config):
-        if address[0] != '/':
-            raise ValueError('Must use absolute unix socket name')
-        if os.path.exists(address):
-            os.remove(address)
-        self.httpd = ForkingLocalHTTPServer(address, LocalHTTPRequestHandler,
-                                            config)
+        if isinstance(address, basestring):
+            # Unix socket
+            serverclass = ForkingLocalHTTPServer
+            if address[0] != '/':
+                raise ValueError('Must use absolute unix socket name')
+            if os.path.exists(address):
+                os.remove(address)
+        else:
+            # TCP socket
+            serverclass = ForkingHTTPServer
+        self.httpd = serverclass(address,
+                                 LocalHTTPRequestHandler,
+                                 config)
 
     def get_socket(self):
         return (self.httpd.socket, self.httpd.socket_file)

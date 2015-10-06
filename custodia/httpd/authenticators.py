@@ -30,16 +30,19 @@ class SimpleCredsAuth(HTTPAuthenticator):
             self._gid = int(self.config['gid'])
 
     def handle(self, request):
-        uid = int(request['creds']['gid'])
-        gid = int(request['creds']['uid'])
+        creds = request.get('creds')
+        if creds is None:
+            return False
+        uid = int(creds['gid'])
+        gid = int(creds['uid'])
         if self._gid == gid or self._uid == uid:
             self._auditlog.svc_access(log.AUDIT_SVC_AUTH_PASS,
-                                      request['creds']['pid'],
+                                      request['client_ident'],
                                       "SCA", "%d, %d" % (uid, gid))
             return True
         else:
             self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                      request['creds']['pid'],
+                                      request['client_ident'],
                                       "SCA", "%d, %d" % (uid, gid))
             return False
 
@@ -59,29 +62,30 @@ class SimpleHeaderAuth(HTTPAuthenticator):
         if self.name not in request['headers']:
             return None
         value = request['headers'][self.name]
+        creds = request.get('creds')
         if self.value is None:
             # Any value is accepted
             pass
         elif isinstance(self.value, str):
             if value != self.value:
                 self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                          request['creds']['pid'],
+                                          request['client_ident'],
                                           "SHA", value)
                 return False
         elif isinstance(self.value, list):
             if value not in self.value:
                 self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                          request['creds']['pid'],
+                                          request['client_ident'],
                                           "SHA", value)
                 return False
         else:
             self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                      request['creds']['pid'],
+                                      request['client_ident'],
                                       "SHA", value)
             return False
 
         self._auditlog.svc_access(log.AUDIT_SVC_AUTH_PASS,
-                                  request['creds']['pid'],
+                                  request['client_ident'],
                                   "SHA", value)
         request['remote_user'] = value
         return True
@@ -116,18 +120,18 @@ class SimpleAuthKeys(HTTPAuthenticator):
                 validated = True
         except Exception:
             self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                      request['creds']['pid'],
+                                      request['client_ident'],
                                       "SAK", name)
             return False
 
         if validated:
             self._auditlog.svc_access(log.AUDIT_SVC_AUTH_PASS,
-                                      request['creds']['pid'],
+                                      request['client_ident'],
                                       "SAK", name)
             request['remote_user'] = name
             return True
 
         self._auditlog.svc_access(log.AUDIT_SVC_AUTH_FAIL,
-                                  request['creds']['pid'],
+                                  request['client_ident'],
                                   "SAK", name)
         return False

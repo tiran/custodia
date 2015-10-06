@@ -6,7 +6,7 @@ try:
     from ConfigParser import RawConfigParser
 except ImportError:
     from configparser import RawConfigParser
-from custodia.httpd.server import LocalHTTPServer
+from custodia.httpd.server import HTTPServer
 from custodia import log
 import importlib
 import os
@@ -111,5 +111,9 @@ if __name__ == '__main__':
         address = config['server_socket']
     else:
         address = os.path.join(os.getcwd(), 'server_socket')
-    httpd = LocalHTTPServer(address, config)
+    if address.count(':') == 1:
+        # TODO INET6 scope and flow
+        host, port = address.split(":")
+        address = (host, int(port))
+    httpd = HTTPServer(address, config)
     httpd.serve()
