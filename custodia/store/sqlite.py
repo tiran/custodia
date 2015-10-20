@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import logging
 import os
 import sqlite3
 import sys
@@ -10,8 +11,7 @@ import unittest
 from custodia.store.interface import CSStore, CSStoreError, CSStoreExists
 
 
-def log_error(error):
-    print(error, file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 class SqliteStore(CSStore):
@@ -32,8 +32,7 @@ class SqliteStore(CSStore):
                 c = conn.cursor()
                 self._create(c)
         except sqlite3.Error as err:
-            log_error("Error creating table %s: [%r]" % (self.table,
-                                                         repr(err)))
+            logger.exception("Error creating table %s", self.table)
             raise CSStoreError('Error occurred while trying to init db')
 
     def get(self, key):
@@ -43,8 +42,8 @@ class SqliteStore(CSStore):
             c = conn.cursor()
             r = c.execute(query, (key,))
             value = r.fetchall()
-        except sqlite3.Error as err:
-            log_error("Error fetching key %s: [%r]" % (key, repr(err)))
+        except sqlite3.Error:
+            logger.exception("Error fetching key %s", key)
             raise CSStoreError('Error occurred while trying to get key')
         if len(value) > 0:
             return value[0][0]
@@ -73,7 +72,7 @@ class SqliteStore(CSStore):
         except sqlite3.IntegrityError as err:
             raise CSStoreExists(str(err))
         except sqlite3.Error as err:
-            log_error("Error storing key %s: [%r]" % (key, repr(err)))
+            logger.exception("Error storing key %s" % key)
             raise CSStoreError('Error occurred while trying to store key')
 
     def span(self, key):
@@ -88,8 +87,8 @@ class SqliteStore(CSStore):
                 c.execute(setdata, (name,))
         except sqlite3.IntegrityError as err:
             raise CSStoreExists(str(err))
-        except sqlite3.Error as err:
-            log_error("Error creating key %s: [%r]" % (name, repr(err)))
+        except sqlite3.Error:
+            logger.exception("Error creating key %s", name)
             raise CSStoreError('Error occurred while trying to span container')
 
     def list(self, keyfilter=''):
@@ -101,8 +100,8 @@ class SqliteStore(CSStore):
             conn = sqlite3.connect(self.dburi)
             r = conn.execute(search, (key,))
             rows = r.fetchall()
-        except sqlite3.Error as err:
-            log_error("Error listing %s: [%r]" % (keyfilter, repr(err)))
+        except sqlite3.Error:
+            logger.exception("Error listing %s: [%r]", keyfilter)
             raise CSStoreError('Error occurred while trying to list keys')
         if len(rows) > 0:
             parent_exists = False
@@ -130,8 +129,8 @@ class SqliteStore(CSStore):
             with conn:
                 c = conn.cursor()
                 r = c.execute(query, (key,))
-        except sqlite3.Error as err:
-            log_error("Error removing key %s: [%r]" % (key, repr(err)))
+        except sqlite3.Error:
+            logger.error("Error removing key %s", key)
             raise CSStoreError('Error occurred while trying to cut key')
         if r.rowcount > 0:
             return True
