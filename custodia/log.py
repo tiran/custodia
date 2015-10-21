@@ -1,42 +1,42 @@
 # Copyright (C) 2015  Custodia Project Contributors - see LICENSE file
 
+import json
 import logging
-import sys
+import logging.config
+import os
+import time
+
+import six
 
 custodia_logger = logging.getLogger('custodia')
 custodia_logger.addHandler(logging.NullHandler())
 
-
-LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOGGING_AUDITFORMAT = "%(asctime)s %(message)s"
-LOGGING_DATEFORMAT = "%Y-%m-%h %H:%M:%S"
+HERE = os.path.dirname(os.path.abspath(__file__))
+LOGGING_CONFIG = os.path.join(HERE, 'custodia.logging.json')
 
 
-def setup_logging(debug=False, auditlog='custodia.audit.log'):
-    # prevent multiple stream handlers
-    root_logger = logging.getLogger()
-    if not any(isinstance(hdlr, logging.StreamHandler)
-               for hdlr in root_logger.handlers):
-        default_fmt = logging.Formatter(LOGGING_FORMAT, LOGGING_DATEFORMAT)
-        stream_hdlr = logging.StreamHandler(sys.stderr)
-        stream_hdlr.setFormatter(default_fmt)
-        root_logger.addHandler(stream_hdlr)
+class UTCFormatter(logging.Formatter):
+    converter = time.gmtime
 
-    custodia_logger = logging.getLogger('custodia')
-    if debug:
-        custodia_logger.setLevel(logging.DEBUG)
-        custodia_logger.debug('Custodia debug logger enabled')
-    else:
-        custodia_logger.setLevel(logging.INFO)
 
-    audit_logger = logging.getLogger('custodia.audit')
-    if len(audit_logger.handlers) == 0:
-        audit_fmt = logging.Formatter(LOGGING_AUDITFORMAT, LOGGING_DATEFORMAT)
-        audit_hdrl = logging.FileHandler(auditlog)
-        audit_hdrl.setFormatter(audit_fmt)
-        audit_logger.addHandler(audit_hdrl)
+def setup_logging(logcfg=LOGGING_CONFIG, debug=False,
+                  auditlog='custodia.audit.log'):
+    substitution = {
+        "$AUDIT_LOG": auditlog,
+        "$ROOT_LEVEL": 'DEBUG' if debug else 'INFO'
+    }
 
-        custodia_logger.debug('Custodia audit log: %s', auditlog)
+    def object_hook(dct):
+        for k, v in dct.items():
+            if isinstance(v, six.text_type):
+                dct[k] = substitution.get(v, v)
+        return dct
+
+    with open(logcfg) as f:
+        cfg = json.load(f, object_hook=object_hook)
+
+    logging.config.dictConfig(cfg)
+    custodia_logger.info('Logging configuration %s loaded.', logcfg)
 
 
 AUDIT_NONE = 0

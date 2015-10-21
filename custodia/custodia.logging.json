@@ -1,0 +1,99 @@
+{
+  "disable_existing_loggers": true,
+  "version": 1,
+  "filters": {},
+  "formatters": {
+    "audit": {
+      "()": "custodia.log.UTCFormatter",
+      "datefmt": "%Y-%m-%dT%H:%M:%SZ",
+      "format": "%(asctime)s %(message)s"
+    },
+    "verbose": {
+      "datefmt": "%Y-%m-%d %H:%M:%S",
+      "format": "%(asctime)s %(levelname)-8s %(name)-25s %(message)s"
+    }
+  },
+  "handlers": {
+    "audit": {
+      "class": "logging.FileHandler",
+      "formatter": "audit",
+      "level": "INFO",
+      "filename": "$AUDIT_LOG"
+    },
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "verbose",
+      "level": "DEBUG",
+      "stream": "ext://sys.stderr"
+    },
+    "null": {
+      "class": "logging.NullHandler",
+      "level": "DEBUG"
+    }
+  },
+  "root": {
+    "handlers": ["console"],
+    "level": "$ROOT_LEVEL"
+  },
+  "loggers": {
+    "custodia.audit": {
+      "handlers": ["audit"],
+      "level": "INFO",
+      "propagate": true
+    },
+    "custodia": {
+      "level": "DEBUG"
+    },
+    "custodia.httpd": {
+      "level": "DEBUG"
+    },
+    "custodia.httpd.authenticators": {
+      "level": "DEBUG"
+    },
+    "custodia.httpd.authorizers": {
+      "level": "DEBUG"
+    },
+    "custodia.httpd.server": {
+      "level": "DEBUG"
+    },
+    "custodia.kubernetes": {
+      "level": "DEBUG"
+    },
+    "custodia.kubernetes.authz": {
+      "level": "DEBUG"
+    },
+    "custodia.kubernetes.node": {
+      "level": "DEBUG"
+    },
+    "custodia.message": {
+      "level": "DEBUG"
+    },
+    "custodia.message.common": {
+      "level": "DEBUG"
+    },
+    "custodia.message.kem": {
+      "level": "DEBUG"
+    },
+    "custodia.secrets": {
+      "level": "DEBUG"
+    },
+    "custodia.store": {
+      "level": "DEBUG"
+    },
+    "custodia.store.encgen": {
+      "level": "DEBUG"
+    },
+    "custodia.store.enclite": {
+      "level": "DEBUG"
+    },
+    "custodia.store.etcdstore": {
+      "level": "DEBUG"
+    },
+    "custodia.store.interface": {
+      "level": "DEBUG"
+    },
+    "custodia.store.sqlite": {
+      "level": "DEBUG"
+    }
+  }
+}

@@ -112,7 +112,8 @@ if __name__ == '__main__':
     config = parse_config(cfgfile)
     debug = config.get('debug', 'false').lower() == 'true'
     auditlog = os.path.abspath(config.get('auditlog', 'custodia.audit.log'))
-    log.setup_logging(debug, auditlog)
+    logcfg = os.path.abspath(config.get('logging_config', log.LOGGING_CONFIG))
+    log.setup_logging(logcfg=logcfg, debug=debug, auditlog=auditlog)
     logger.debug('Config file %s loaded', cfgfile)
 
     url = config.get('server_url', None)
