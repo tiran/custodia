@@ -1,0 +1,63 @@
+policy_module(custodia, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+type custodia_t;
+type custodia_exec_t;
+inetd_service_domain(custodia_t, custodia_exec_t)
+
+permissive custodia_t;
+
+type custodia_log_t;
+logging_log_file(custodia_log_t)
+
+type custodia_config_t;
+files_config_file(custodia_config_t)
+
+type custodia_var_lib_t;
+files_type(custodia_var_lib_t)
+
+type custodia_var_run_t;
+files_pid_file(custodia_var_run_t)
+
+type custodia_unit_file_t;
+systemd_unit_file(custodia_unit_file_t)
+
+########################################
+#
+# custodia local policy
+#
+
+allow custodia_t self:unix_stream_socket { create_stream_socket_perms connectto };
+allow custodia_t self:tcp_socket create_stream_socket_perms;
+
+manage_dirs_pattern(custodia_t, custodia_config_t, custodia_config_t)
+manage_files_pattern(custodia_t, custodia_config_t, custodia_config_t)
+files_etc_filetrans(custodia_t, custodia_config_t, dir, "custodia")
+
+manage_dirs_pattern(custodia_t, custodia_log_t, custodia_log_t)
+manage_files_pattern(custodia_t, custodia_log_t, custodia_log_t)
+manage_lnk_files_pattern(custodia_t, custodia_log_t, custodia_log_t)
+logging_log_filetrans(custodia_t, custodia_log_t, { dir file lnk_file })
+
+manage_dirs_pattern(custodia_t, custodia_var_lib_t, custodia_var_lib_t)
+manage_files_pattern(custodia_t, custodia_var_lib_t, custodia_var_lib_t)
+manage_lnk_files_pattern(custodia_t, custodia_var_lib_t, custodia_var_lib_t)
+files_var_lib_filetrans(custodia_t, custodia_var_lib_t, { dir file lnk_file })
+
+manage_dirs_pattern(custodia_t, custodia_var_run_t, custodia_var_run_t)
+manage_files_pattern(custodia_t, custodia_var_run_t, custodia_var_run_t)
+manage_sock_files_pattern(custodia_t, custodia_var_run_t, custodia_var_run_t)
+manage_lnk_files_pattern(custodia_t, custodia_var_run_t, custodia_var_run_t)
+files_pid_filetrans(custodia_t, custodia_var_run_t, { dir file lnk_file sock_file })
+
+domain_use_interactive_fds(custodia_t)
+
+files_read_etc_files(custodia_t)
+
+fs_read_cgroup_files(custodia_t)
+
+miscfiles_read_localization(custodia_t)

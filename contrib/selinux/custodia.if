@@ -1,0 +1,270 @@
+
+## <summary>policy for custodia</summary>
+
+########################################
+## <summary>
+##	Execute custodia_exec_t in the custodia domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`custodia_domtrans',`
+	gen_require(`
+		type custodia_t, custodia_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, custodia_exec_t, custodia_t)
+')
+
+######################################
+## <summary>
+##	Execute custodia in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_exec',`
+	gen_require(`
+		type custodia_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, custodia_exec_t)
+')
+########################################
+## <summary>
+##	Read custodia's log files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+## <rolecap/>
+#
+interface(`custodia_read_log',`
+	gen_require(`
+		type custodia_log_t;
+	')
+
+	logging_search_logs($1)
+	read_files_pattern($1, custodia_log_t, custodia_log_t)
+')
+
+########################################
+## <summary>
+##	Append to custodia log files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_append_log',`
+	gen_require(`
+		type custodia_log_t;
+	')
+
+	logging_search_logs($1)
+	append_files_pattern($1, custodia_log_t, custodia_log_t)
+')
+
+########################################
+## <summary>
+##	Manage custodia log files
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_manage_log',`
+	gen_require(`
+		type custodia_log_t;
+	')
+
+	logging_search_logs($1)
+	manage_dirs_pattern($1, custodia_log_t, custodia_log_t)
+	manage_files_pattern($1, custodia_log_t, custodia_log_t)
+	manage_lnk_files_pattern($1, custodia_log_t, custodia_log_t)
+')
+
+########################################
+## <summary>
+##	Search custodia lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_search_lib',`
+	gen_require(`
+		type custodia_var_lib_t;
+	')
+
+	allow $1 custodia_var_lib_t:dir search_dir_perms;
+	files_search_var_lib($1)
+')
+
+########################################
+## <summary>
+##	Read custodia lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_read_lib_files',`
+	gen_require(`
+		type custodia_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	read_files_pattern($1, custodia_var_lib_t, custodia_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage custodia lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_manage_lib_files',`
+	gen_require(`
+		type custodia_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_files_pattern($1, custodia_var_lib_t, custodia_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage custodia lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_manage_lib_dirs',`
+	gen_require(`
+		type custodia_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_dirs_pattern($1, custodia_var_lib_t, custodia_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Read custodia PID files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`custodia_read_pid_files',`
+	gen_require(`
+		type custodia_var_run_t;
+	')
+
+	files_search_pids($1)
+	read_files_pattern($1, custodia_var_run_t, custodia_var_run_t)
+')
+
+########################################
+## <summary>
+##	Execute custodia server in the custodia domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed to transition.
+##	</summary>
+## </param>
+#
+interface(`custodia_systemctl',`
+	gen_require(`
+		type custodia_t;
+		type custodia_unit_file_t;
+	')
+
+	systemd_exec_systemctl($1)
+        systemd_read_fifo_file_passwd_run($1)
+	allow $1 custodia_unit_file_t:file read_file_perms;
+	allow $1 custodia_unit_file_t:service manage_service_perms;
+
+	ps_process_pattern($1, custodia_t)
+')
+
+
+########################################
+## <summary>
+##	All of the rules required to administrate
+##	an custodia environment
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role allowed access.
+##	</summary>
+## </param>
+## <rolecap/>
+#
+interface(`custodia_admin',`
+	gen_require(`
+		type custodia_t;
+		type custodia_log_t;
+		type custodia_var_lib_t;
+		type custodia_var_run_t;
+	type custodia_unit_file_t;
+	')
+
+	allow $1 custodia_t:process { signal_perms };
+	ps_process_pattern($1, custodia_t)
+
+    tunable_policy(`deny_ptrace',`',`
+        allow $1 custodia_t:process ptrace;
+    ')
+
+	logging_search_logs($1)
+	admin_pattern($1, custodia_log_t)
+
+	files_search_var_lib($1)
+	admin_pattern($1, custodia_var_lib_t)
+
+	files_search_pids($1)
+	admin_pattern($1, custodia_var_run_t)
+
+	custodia_systemctl($1)
+	admin_pattern($1, custodia_unit_file_t)
+	allow $1 custodia_unit_file_t:service all_service_perms;
+	optional_policy(`
+		systemd_passwd_agent_exec($1)
+		systemd_read_fifo_file_passwd_run($1)
+	')
+')

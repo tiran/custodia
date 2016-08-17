@@ -1,0 +1,15 @@
+/usr/lib/systemd/system/custodia.service		--	gen_context(system_u:object_r:custodia_unit_file_t,s0)
+
+/usr/lib/systemd/system/custodia.socket		--	gen_context(system_u:object_r:custodia_unit_file_t,s0)
+
+/usr/sbin/custodia		--	gen_context(system_u:object_r:custodia_exec_t,s0)
+
+/etc/custodia(/.*)?		gen_context(system_u:object_r:custodia_config_t,s0)
+
+/var/lib/custodia(/.*)?		gen_context(system_u:object_r:custodia_var_lib_t,s0)
+
+/var/log/custodia(/.*)?		gen_context(system_u:object_r:custodia_log_t,s0)
+
+/var/run/custodia(/.*)?		gen_context(system_u:object_r:custodia_var_run_t,s0)
+
+/var/run/custodia/custodia\.sock	-s	gen_context(system_u:object_r:custodia_var_run_t,s0)

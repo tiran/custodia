@@ -24,6 +24,8 @@ Contents:
    config.rst
    api.rst
    plugins/index.rst
+   client.rst
+
 
 Indices and tables
 ==================

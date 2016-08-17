@@ -1,0 +1,6 @@
+*.pp
+*.8
+*.spec
+*.rpm
+tmp/
+/noarch
