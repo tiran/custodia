@@ -36,6 +36,7 @@ setup(
     url='https://github.com/latchset/custodia',
     packages=[
         'custodia',
+        'custodia.cli',
         'custodia.httpd',
         'custodia.kubernetes',
         'custodia.message',
@@ -44,7 +45,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'custodia = custodia.server:main'
+            'custodia = custodia.server:main',
+            'custodia-cli = custodia.cli:main',
         ],
     },
     classifiers=[
