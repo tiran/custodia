@@ -1,15 +1,14 @@
 # Copyright (C) 2015  Custodia Project Contributors - see LICENSE file
-
 try:
     # pylint: disable=import-error
     from urllib import quote as url_escape
 except ImportError:
     # pylint: disable=no-name-in-module,import-error
     from urllib.parse import quote as url_escape
+import argparse
 import importlib
 import logging
 import os
-import sys
 
 # use https://pypi.python.org/pypi/configparser/ on Python 2
 from configparser import ConfigParser, ExtendedInterpolation
@@ -23,16 +22,16 @@ from custodia.httpd.server import HTTPServer
 CONFIG_SPECIALS = ['authenticators', 'authorizers', 'consumers', 'stores']
 
 
-def source_config():
-    if (len(sys.argv) > 1):
-        cfgfile = sys.argv[-1]
-    elif os.path.isfile('custodia.conf'):
-        cfgfile = 'custodia.conf'
-    elif os.path.isfile('/etc/custodia/custodia.conf'):
-        cfgfile = '/etc/custodia/custodia.conf'
-    else:
-        raise IOError("Configuration file not found")
-    return os.path.abspath(cfgfile)
+argparser = argparse.ArgumentParser(
+    prog='custodia',
+    description='Custodia server'
+)
+argparser.add_argument(
+    '--debug', action='store_true', help='Debug mode'
+)
+argparser.add_argument(
+    'configfile', type=str, help='Path to custodia server config'
+)
 
 
 def attach_store(typename, plugins, stores):
@@ -46,11 +45,11 @@ def attach_store(typename, plugins, stores):
                              '"%s"' % (typename, name, c.store_name))
 
 
-def parse_config(cfgfile):
+def parse_config(args):
     parser = ConfigParser(interpolation=ExtendedInterpolation())
     parser.optionxform = str
 
-    with open(cfgfile) as f:
+    with open(args.configfile) as f:
         parser.read_file(f)
 
     config = dict()
@@ -74,7 +73,8 @@ def parse_config(cfgfile):
             'global', 'tls_verify_client', fallback=False)
         config['debug'] = parser.getboolean(
             'global', 'debug', fallback=False)
-
+        if args.debug:
+            config['debug'] = True
         config['auditlog'] = os.path.abspath(
             config.get('auditlog', 'custodia.audit.log'))
         config['umask'] = int(config.get('umask', '027'), 8)
@@ -143,11 +143,11 @@ def parse_config(cfgfile):
 
 
 def main():
-    cfgfile = source_config()
-    config = parse_config(cfgfile)
+    args = argparser.parse_args()
+    config = parse_config(args)
     log.setup_logging(config['debug'], config['auditlog'])
     logger = logging.getLogger('custodia')
-    logger.debug('Config file %s loaded', cfgfile)
+    logger.debug('Config file %s loaded', args.configfile)
 
     httpd = HTTPServer(config['server_url'], config)
     httpd.serve()
