@@ -1,0 +1,19 @@
+# /etc/systemd/system/custodia.service
+
+[Unit]
+Description=Custodia Secrets Service
+Documentation=https://github.com/latchset/custodia
+Requires=custodia.socket
+After=network.target
+
+[Service]
+# Custodia >= 0.2 supports Type=notify
+Type=simple
+ExecStartPre=/bin/mkdir -p --mode=750 /var/log/custodia
+ExecStartPre=/bin/mkdir -p --mode=750 /var/lib/custodia
+# ExecStart=/usr/sbin/custodia /etc/custodia/custodia.conf
+Environment="PYTHONPATH=/root/custodia"
+ExecStart=/usr/bin/python2 -m custodia.server /etc/custodia/custodia.conf
+
+[Install]
+WantedBy=multi-user.target

@@ -21,6 +21,7 @@ Contents:
    :maxdepth: 2
 
    config.rst
+   client.rst
 
 
 Indices and tables
