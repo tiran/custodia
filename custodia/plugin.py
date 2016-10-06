@@ -117,6 +117,12 @@ class OptionHandler(object):
     def _get_str(self, name, default):
         return self.parser.get(self.section, name, fallback=default)
 
+    def _get_text(self, name, default):
+        result = self.parser.get(self.section, name, fallback=default)
+        if isinstance(result, bytes):
+            result = result.decode('utf-8')
+        return result
+
     def _get_str_set(self, name, default):
         try:
             value = self.parser.get(self.section, name)
@@ -181,6 +187,8 @@ class PluginOption(object):
 
     *str*
       plain string
+    *text*
+      text string (unicode)
     *str_set*
       set of space-separated strings
     *str_list*
