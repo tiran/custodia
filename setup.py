@@ -4,7 +4,6 @@
 from __future__ import print_function
 
 import os
-import sys
 
 import setuptools
 from setuptools import Command, setup
@@ -54,10 +53,10 @@ extras_require = {
 
 # backwards compatibility with old setuptools
 # extended interpolation is provided by stdlib in Python 3.4+
-if SETUPTOOLS_VERSION < (18, 0, 0) and sys.version_info < (3, 4):
-    requirements.append('configparser')
-else:
-    extras_require[':python_version<"3.4"'] = ['configparser']
+# if SETUPTOOLS_VERSION < (18, 0, 0) and sys.version_info < (3, 4):
+#     requirements.append('configparser')
+# else:
+#     extras_require[':python_version<"3.4"'] = ['configparser']
 
 
 with open('README') as f:
@@ -118,6 +117,9 @@ setup(
         'custodia.message',
         'custodia.server',
         'custodia.store',
+        'custodia.vendor',
+        'custodia.vendor.backports',
+        'custodia.vendor.backports.configparser',
     ],
     entry_points={
         'console_scripts': [
