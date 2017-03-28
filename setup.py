@@ -36,10 +36,14 @@ requirements = [
     'requests'
 ]
 
+# extra requirements
+ipa_requires = ['ipalib >= 4.5.0', 'ipaclient >= 4.5.0']
+
 # test requirements
-test_requires = ['coverage', 'pytest']
+test_requires = ['coverage', 'pytest', 'mock'] + ipa_requires
 
 extras_require = {
+    'ipa': ipa_requires,
     'test': test_requires,
     'test_docs': ['docutils', 'markdown', 'sphinx-argparse',
                   'sphinxcontrib-spelling'],
@@ -66,6 +70,7 @@ custodia_authenticators = [
     'SimpleAuthKeys = custodia.httpd.authenticators:SimpleAuthKeys',
     ('SimpleClientCertAuth = '
      'custodia.httpd.authenticators:SimpleClientCertAuth'),
+    'IPAInterface = custodia.ipa.interface:IPAInterface',
 ]
 
 custodia_authorizers = [
@@ -88,6 +93,8 @@ custodia_consumers = [
 custodia_stores = [
     'EncryptedOverlay = custodia.store.encgen:EncryptedOverlay',
     'EncryptedStore = custodia.store.enclite:EncryptedStore',
+    'IPAVault = custodia.ipa.vault:IPAVault',
+    'IPACertRequest = custodia.ipa.certrequest:IPACertRequest',
     'SqliteStore = custodia.store.sqlite:SqliteStore',
 ]
 
@@ -109,6 +116,7 @@ setup(
         'custodia',
         'custodia.cli',
         'custodia.httpd',
+        'custodia.ipa',
         'custodia.message',
         'custodia.server',
         'custodia.store',
