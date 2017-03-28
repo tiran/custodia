@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable-all
 
 """Configuration file parser.
 
@@ -135,9 +136,9 @@ import re
 import sys
 import warnings
 
-from backports.configparser.helpers import OrderedDict as _default_dict
-from backports.configparser.helpers import ChainMap as _ChainMap
-from backports.configparser.helpers import from_none, open, str, PY2
+from .helpers import OrderedDict as _default_dict
+from .helpers import ChainMap as _ChainMap
+from .helpers import from_none, open, str, PY2
 
 __all__ = ["NoSectionError", "DuplicateOptionError", "DuplicateSectionError",
            "NoOptionError", "InterpolationError", "InterpolationDepthError",
