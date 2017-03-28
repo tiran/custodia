@@ -19,12 +19,14 @@ requirements = [
 
 # extra requirements
 etcd_requires = ['python-etcd']
+ipa_requires = ['ipalib >= 4.5.0', 'ipaclient >= 4.5.0']
 
 # test requirements
-test_requires = ['coverage', 'pytest'] + etcd_requires
+test_requires = ['coverage', 'pytest', 'mock'] + etcd_requires + ipa_requires
 
 extras_require = {
     'etcd_store': etcd_requires,
+    'ipa': ipa_requires,
     'test': test_requires,
     'test_docs': ['docutils', 'markdown'] + etcd_requires,
     'test_pep8': ['flake8', 'flake8-import-order', 'pep8-naming'],
@@ -72,6 +74,7 @@ custodia_consumers = [
 custodia_stores = [
     'EncryptedOverlay = custodia.store.encgen:EncryptedOverlay',
     'EncryptedStore = custodia.store.enclite:EncryptedStore',
+    'IPAVault = custodia.ipa.vault:IPAVault',
     'EtcdStore = custodia.store.etcdstore:EtcdStore',
     'SqliteStore = custodia.store.sqlite:SqliteStore',
 ]
@@ -91,6 +94,7 @@ setup(
         'custodia',
         'custodia.cli',
         'custodia.httpd',
+        'custodia.ipa',
         'custodia.message',
         'custodia.server',
         'custodia.store',
