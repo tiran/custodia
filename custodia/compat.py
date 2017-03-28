@@ -7,7 +7,7 @@ import six
 
 if six.PY2:
     # use https://pypi.python.org/pypi/configparser/ on Python 2
-    from backports import configparser
+    from custodia.vendor.backports import configparser
     from urllib import quote as url_escape
     from urllib import quote_plus, unquote
     from urlparse import parse_qs, urlparse
