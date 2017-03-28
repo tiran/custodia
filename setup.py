@@ -15,10 +15,14 @@ requirements = [
     'requests'
 ]
 
+# extra requirements
+ipa_requires = ['ipalib >= 4.5.0', 'ipaclient >= 4.5.0']
+
 # test requirements
-test_requires = ['coverage', 'pytest']
+test_requires = ['coverage', 'pytest', 'mock'] + ipa_requires
 
 extras_require = {
+    'ipa': ipa_requires,
     'test': test_requires,
     'test_docs': ['docutils', 'markdown'],
     'test_pep8': ['flake8', 'flake8-import-order', 'pep8-naming'],
@@ -66,6 +70,7 @@ custodia_consumers = [
 custodia_stores = [
     'EncryptedOverlay = custodia.store.encgen:EncryptedOverlay',
     'EncryptedStore = custodia.store.enclite:EncryptedStore',
+    'IPAVault = custodia.ipa.vault:IPAVault',
     'SqliteStore = custodia.store.sqlite:SqliteStore',
 ]
 
@@ -84,6 +89,7 @@ setup(
         'custodia',
         'custodia.cli',
         'custodia.httpd',
+        'custodia.ipa',
         'custodia.message',
         'custodia.server',
         'custodia.store',
