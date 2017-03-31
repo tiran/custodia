@@ -36,17 +36,13 @@ requirements = [
     'requests'
 ]
 
-# extra requirements
-etcd_requires = ['python-etcd']
-
 # test requirements
-test_requires = ['coverage', 'pytest'] + etcd_requires
+test_requires = ['coverage', 'pytest']
 
 extras_require = {
-    'etcd_store': etcd_requires,
     'test': test_requires,
     'test_docs': ['docutils', 'markdown', 'sphinx-argparse',
-                  'sphinxcontrib-spelling'] + etcd_requires,
+                  'sphinxcontrib-spelling'],
     'test_pep8': ['flake8', 'flake8-import-order', 'pep8-naming'],
     'test_pylint': ['pylint'] + test_requires,
 }
@@ -92,7 +88,6 @@ custodia_consumers = [
 custodia_stores = [
     'EncryptedOverlay = custodia.store.encgen:EncryptedOverlay',
     'EncryptedStore = custodia.store.enclite:EncryptedStore',
-    'EtcdStore = custodia.store.etcdstore:EtcdStore',
     'SqliteStore = custodia.store.sqlite:SqliteStore',
 ]
 
