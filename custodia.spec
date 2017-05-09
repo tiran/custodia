@@ -1,12 +1,16 @@
 %if 0%{?fedora}
 %global with_python3 1
+%global with_etcdstore 1
+%else
+%global with_python3 0
+%global with_etcdstore 0
 %endif
 
-%{!?version: %define version 0.3.1}
+%{!?version: %define version 0.4.0}
 
 Name:           custodia
 Version:        %{version}
-Release:        3%{?dist}
+Release:        1%{?dist}
 Summary:        A service to manage, retrieve and store secrets for other processes
 
 License:        GPLv3+
@@ -20,6 +24,7 @@ Source5:        custodia.tmpfiles.conf
 
 BuildArch:      noarch
 
+%if 0%{?fedora}
 BuildRequires:      python2-devel
 BuildRequires:      python-jwcrypto
 BuildRequires:      python2-requests
@@ -27,10 +32,23 @@ BuildRequires:      python2-setuptools >= 18
 BuildRequires:      python2-coverage
 BuildRequires:      python-tox >= 2.3.1
 BuildRequires:      python2-pytest
-BuildRequires:      python2-python-etcd
 BuildRequires:      python-docutils
 BuildRequires:      python2-configparser
 BuildRequires:      python2-systemd
+%if 0%{?with_etcdstore}
+BuildRequires:      python2-python-etcd
+%endif
+%else
+BuildRequires:      python-devel
+BuildRequires:      python-jwcrypto
+BuildRequires:      python-requests
+BuildRequires:      python-setuptools
+BuildRequires:      python-coverage
+BuildRequires:      pytest
+BuildRequires:      python-virtualenv
+BuildRequires:      python-docutils
+BuildRequires:      systemd-python
+%endif  # fedora
 
 %if 0%{?with_python3}
 BuildRequires:      python3-devel
@@ -77,11 +95,18 @@ A service to manage, retrieve and store secrets for other processes
 Summary:    Sub-package with python2 custodia modules
 Provides:   python-custodia = %{version}-%{release}
 Obsoletes:  python-custodia <= 0.1.0
+%if 0%{?fedora}
 Requires:   python2-configparser
 Requires:   python-jwcrypto
 Requires:   python2-requests
 Requires:   python2-setuptools
 Requires:   python2-systemd
+%else
+Requires:   python-jwcrypto
+Requires:   python-requests
+Requires:   python-setuptools
+Requires:   systemd-python
+%endif  # fedora
 Conflicts:  python2-ipalib < 4.5
 
 %description -n python2-custodia
@@ -89,17 +114,18 @@ Sub-package with python custodia modules
 
 %{overview}
 
-
-%package -n python2-custodia-extra
-Summary:    Sub-package with python2 custodia extra modules
+%if 0%{?with_etcdstore}
+%package -n python2-custodia-etcdstore
+Summary:    Sub-package with python2 custodia etcdstore
 Requires:   python2-python-etcd
 Requires:   python2-custodia = %{version}-%{release}
+Obsoletes:  python2-custodia-extras <= 0.3.1
 
-%description -n python2-custodia-extra
-Sub-package with python2 custodia extra modules (etcdstore)
+%description -n python2-custodia-etcdstore
+Sub-package with python2 custodia etcdstore plugin
 
 %{overview}
-
+%endif  # with_etcdstore
 
 %if 0%{?with_python3}
 %package -n python3-custodia
@@ -115,18 +141,20 @@ Sub-package with python custodia modules
 
 %{overview}
 
-
-%package -n python3-custodia-extra
-Summary:    Sub-package with python3 custodia extra modules
+%if 0%{?with_etcdstore}
+%package -n python3-custodia-etcdstore
+Summary:    Sub-package with python3 custodia etcdstoore
 Requires:   python3-python-etcd
 Requires:   python3-custodia = %{version}-%{release}
+Obsoletes:  python3-custodia-extras <= 0.3.1
 
-%description -n python3-custodia-extra
-Sub-package with python3 custodia extra modules (etcdstore)
+%description -n python3-custodia-etcdstore
+Sub-package with python3 custodia extra etcdstore plugin
 
 %{overview}
 
-%endif
+%endif  # with_etcdstore
+%endif  # with_python3
 
 
 %prep
@@ -142,6 +170,8 @@ grep `sha512sum %{SOURCE0}` %{SOURCE1} || (echo "Checksum invalid!" && exit 1)
 
 
 %check
+
+%if 0%{?fedora}
 # don't download packages
 export PIP_INDEX_URL=http://host.invalid./
 # Don't try to download dnspython3. The package is provided by python3-dns
@@ -151,7 +181,23 @@ tox --sitepackages -e py27 -- --skip-servertests
 %if 0%{?with_python3}
 TOXENV=$(%{__python3} -c 'import sys; print("py{0.major}{0.minor}".format(sys.version_info))')
 tox --sitepackages -e $TOXENV -- --skip-servertests
-%endif
+%endif  # with_python3
+%else
+# create a virtual env like tox
+mkdir -p build
+virtualenv --system-site-packages --python=%{__python2} build/testenv
+# copy package files into virtual env
+cp -R %{buildroot}%{python2_sitelib}/* build/testenv/lib/python2.7/site-packages/
+cp %{buildroot}%{_bindir}/custodia-cli build/testenv/bin
+cp %{buildroot}%{_sbindir}/custodia build/testenv/bin
+# test
+build/testenv/bin/python build/testenv/bin/custodia --help
+build/testenv/bin/python build/testenv/bin/custodia-cli --help
+build/testenv/bin/python build/testenv/bin/custodia-cli plugins
+build/testenv/bin/python -m py.test --skip-servertest
+# cleanup
+rm -rf build/testenv
+%endif  # fedora
 
 
 %install
@@ -167,8 +213,10 @@ mkdir -p %{buildroot}/%{_localstatedir}/log/custodia
 
 %{__python2} setup.py install --skip-build --root %{buildroot}
 mv %{buildroot}/%{_bindir}/custodia %{buildroot}/%{_sbindir}/custodia
+%if 0%{?fedora}
 cp %{buildroot}/%{_sbindir}/custodia %{buildroot}/%{_sbindir}/custodia-2
 cp %{buildroot}/%{_bindir}/custodia-cli %{buildroot}/%{_bindir}/custodia-cli-2
+%endif  # fedora
 install -m 644 -t "%{buildroot}/%{_mandir}/man7" man/custodia.7
 install -m 644 -t "%{buildroot}/%{_defaultdocdir}/custodia" README API.md
 install -m 644 -t "%{buildroot}/%{_defaultdocdir}/custodia/examples" custodia.conf
@@ -208,9 +256,11 @@ cp %{buildroot}/%{_bindir}/custodia-cli %{buildroot}/%{_bindir}/custodia-cli-3
 %{_sbindir}/custodia-2
 %{_bindir}/custodia-cli-2
 
-%files -n python2-custodia-extra
+%if 0%{?with_etcdstore}
+%files -n python2-custodia-etcdstore
 %license LICENSE
 %{python2_sitelib}/custodia/store/etcdstore.py*
+%endif  # with_etcdstore
 
 %if 0%{?with_python3}
 %files -n python3-custodia
@@ -221,9 +271,11 @@ cp %{buildroot}/%{_bindir}/custodia-cli %{buildroot}/%{_bindir}/custodia-cli-3
 %{_sbindir}/custodia-3
 %{_bindir}/custodia-cli-3
 
-%files -n python3-custodia-extra
+%if 0%{?with_etcdstore}
+%files -n python3-custodia-etcdstore
 %license LICENSE
 %{python3_sitelib}/custodia/store/etcdstore.py
 %{python3_sitelib}/custodia/store/__pycache__/etcdstore.*
-%endif
+%endif  # with_etcdstore
+%endif  # with_python3
 

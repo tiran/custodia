@@ -120,7 +120,11 @@ rpmroot:
 	mkdir -p $(RPMBUILD)/SPECS
 	mkdir -p $(RPMBUILD)/SRPMS
 
-rpmfiles: rpmroot packages
+sdist: egg_info
+	$(PYTHON) setup.py sdist
+	cd dist && for F in *.gz; do sha512sum $${F} > $${F}.sha512sum.txt; done
+
+rpmfiles: rpmroot sdist
 	mv dist/custodia-$(VERSION).tar.gz* $(RPMBUILD)/SOURCES
 	cp contrib/config/custodia/custodia.conf $(RPMBUILD)/SOURCES/custodia.conf
 	cp contrib/config/systemd/system/custodia.service $(RPMBUILD)/SOURCES/custodia.service
